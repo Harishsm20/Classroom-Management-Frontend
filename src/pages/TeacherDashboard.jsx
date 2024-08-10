@@ -1,35 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PageHeader from './PageHeader';
+import { parseJwt } from '../service/jwtService'; 
 
 const TeacherDashboard = () => {
     const [students, setStudents] = useState([]);
     const [timetable, setTimetable] = useState([]);
-    const [newPeriod, setNewPeriod] = useState({ subject: '', startTime: '', endTime: '', day: '' });
+    const [newPeriod, setNewPeriod] = useState({
+        subject: '',
+        startTime: '',
+        endTime: '',
+        day: '',
+        teacher: '',
+        classroom: ''
+    });
 
     useEffect(() => {
         const fetchData = async () => {
+            const token = localStorage.getItem('token');
             try {
-                // Fetch students and timetable for the teacher's classroom
                 const [studentsRes, timetableRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/users?role=Student'),
-                    axios.get('http://localhost:5000/api/timetable') // Adjust endpoint as needed
+                    axios.get('http://localhost:5000/api/users?role=Student', {
+                        headers: { 'x-auth-token': token }
+                    }),
+                    axios.get('http://localhost:5000/api/timetable')
                 ]);
+    
+                // Log the API responses
+                console.log('Students Response:', studentsRes.data);
+                console.log('Timetable Response:', timetableRes.data);
+    
                 setStudents(studentsRes.data);
                 setTimetable(timetableRes.data);
             } catch (error) {
                 console.error(error);
             }
         };
+    
+        // Extract teacher ID from the JWT token
+        const token = localStorage.getItem('token');
+        const decodedToken = parseJwt(token);
+    
+        if (decodedToken && decodedToken.user) {
+            setNewPeriod((prevPeriod) => ({
+                ...prevPeriod,
+                teacher: decodedToken.user.id
+            }));
+        }
+    
         fetchData();
     }, []);
+    
 
     const handleAddPeriod = async (e) => {
         e.preventDefault();
         try {
             await axios.post('http://localhost:5000/api/timetable', newPeriod);
-            setNewPeriod({ subject: '', startTime: '', endTime: '', day: '' });
-            // Reload timetable data
+            setNewPeriod({
+                subject: '',
+                startTime: '',
+                endTime: '',
+                day: '',
+                teacher: newPeriod.teacher, // Keep the teacher ID
+                classroom: ''
+            });
             const timetableRes = await axios.get('http://localhost:5000/api/timetable');
             setTimetable(timetableRes.data);
         } catch (error) {
@@ -78,6 +112,13 @@ const TeacherDashboard = () => {
                     placeholder="Day (e.g., Monday)"
                     value={newPeriod.day}
                     onChange={(e) => setNewPeriod({ ...newPeriod, day: e.target.value })}
+                    required
+                />
+                <input
+                    type="text"
+                    placeholder="Classroom"
+                    value={newPeriod.classroom}
+                    onChange={(e) => setNewPeriod({ ...newPeriod, classroom: e.target.value })}
                     required
                 />
                 <button type="submit">Add Period</button>
