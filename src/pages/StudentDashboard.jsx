@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import PageHeader from './PageHeader';
 
 const StudentDashboard = () => {
     const [classroom, setClassroom] = useState(null);
@@ -24,6 +25,8 @@ const StudentDashboard = () => {
 
     return (
         <div>
+            <PageHeader title="Student Dashboard" />
+
             <h2>Student Dashboard</h2>
 
             {classroom && (

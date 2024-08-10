@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { parseJwt } from '../service/jwtService';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -11,12 +12,25 @@ const Login = () => {
         e.preventDefault();
         try {
             const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-            localStorage.setItem('token', response.data.token);
-            navigate('/dashboard');
+            const token = response.data.token;
+            console.log("Token received:", token);
+            localStorage.setItem('token', token);
+    
+            const decodedToken = parseJwt(token);
+            console.log("Decoded Token:", decodedToken);
+    
+            if (decodedToken) {
+                const role = decodedToken.user.role;
+                console.log(`Role extracted: ${role}`);
+                localStorage.setItem('role', role);
+                console.log(`/${role.toLowerCase()}-dashboard`)
+                navigate(`/${role.toLowerCase()}-dashboard`);
+            }
         } catch (error) {
             console.error(error);
         }
     };
+    
 
     return (
         <form onSubmit={handleSubmit}>

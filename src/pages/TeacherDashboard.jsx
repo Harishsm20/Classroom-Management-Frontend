@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import PageHeader from './PageHeader';
 
 const TeacherDashboard = () => {
     const [students, setStudents] = useState([]);
@@ -38,6 +39,8 @@ const TeacherDashboard = () => {
 
     return (
         <div>
+            <PageHeader title="Teacher Dashboard" />
+
             <h2>Teacher Dashboard</h2>
 
             <h3>Students</h3>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import PageHeader from './PageHeader';
 
 const PrincipalDashboard = () => {
     const [teachers, setTeachers] = useState([]);
@@ -10,11 +11,20 @@ const PrincipalDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const token = localStorage.getItem('token'); 
+                
                 const [teachersRes, studentsRes, classroomsRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/users?role=Teacher'),
-                    axios.get('http://localhost:5000/api/users?role=Student'),
-                    axios.get('http://localhost:5000/api/classrooms')
+                    axios.get('http://localhost:5000/api/users?role=Teacher', {
+                        headers: { 'x-auth-token': token }
+                    }),
+                    axios.get('http://localhost:5000/api/users?role=Student', {
+                        headers: { 'x-auth-token': token }
+                    }),
+                    axios.get('http://localhost:5000/api/classrooms', {
+                        headers: { 'x-auth-token': token }
+                    })
                 ]);
+                
                 setTeachers(teachersRes.data);
                 setStudents(studentsRes.data);
                 setClassrooms(classroomsRes.data);
@@ -28,10 +38,19 @@ const PrincipalDashboard = () => {
     const handleCreateClassroom = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/classrooms', newClassroom);
+            const token = localStorage.getItem('token');
+            
+            await axios.post('http://localhost:5000/api/classrooms', newClassroom, {
+                headers: { 'x-auth-token': token }
+            });
+            
             setNewClassroom({ name: '', startTime: '', endTime: '', days: '' });
+            
             // Reload classrooms data
-            const classroomsRes = await axios.get('http://localhost:5000/api/classrooms');
+            const classroomsRes = await axios.get('http://localhost:5000/api/classrooms', {
+                headers: { 'x-auth-token': token }
+            });
+            
             setClassrooms(classroomsRes.data);
         } catch (error) {
             console.error(error);
@@ -40,6 +59,8 @@ const PrincipalDashboard = () => {
 
     return (
         <div>
+            <PageHeader title="Principal Dashboard" />
+
             <h2>Principal Dashboard</h2>
 
             <h3>Teachers</h3>
