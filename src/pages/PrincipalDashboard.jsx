@@ -1,38 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [role, setRole] = useState('Student');
-    const navigate = useNavigate();
+const PrincipalDashboard = () => {
+    const [teachers, setTeachers] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [classrooms, setClassrooms] = useState([]);
+    const [newClassroom, setNewClassroom] = useState({ name: '', startTime: '', endTime: '', days: '' });
 
-    const handleSubmit = async (e) => {
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [teachersRes, studentsRes, classroomsRes] = await Promise.all([
+                    axios.get('http://localhost:5000/api/users?role=Teacher'),
+                    axios.get('http://localhost:5000/api/users?role=Student'),
+                    axios.get('http://localhost:5000/api/classrooms')
+                ]);
+                setTeachers(teachersRes.data);
+                setStudents(studentsRes.data);
+                setClassrooms(classroomsRes.data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleCreateClassroom = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/auth/signup', { name, email, password, role });
-            navigate('/login');
+            await axios.post('http://localhost:5000/api/classrooms', newClassroom);
+            setNewClassroom({ name: '', startTime: '', endTime: '', days: '' });
+            // Reload classrooms data
+            const classroomsRes = await axios.get('http://localhost:5000/api/classrooms');
+            setClassrooms(classroomsRes.data);
         } catch (error) {
             console.error(error);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Signup</h2>
-            <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="Principal">Principal</option>
-                <option value="Teacher">Teacher</option>
-                <option value="Student">Student</option>
-            </select>
-            <button type="submit">Signup</button>
-        </form>
+        <div>
+            <h2>Principal Dashboard</h2>
+
+            <h3>Teachers</h3>
+            <ul>
+                {teachers.map(teacher => (
+                    <li key={teacher._id}>{teacher.name}</li>
+                ))}
+            </ul>
+
+            <h3>Students</h3>
+            <ul>
+                {students.map(student => (
+                    <li key={student._id}>{student.name}</li>
+                ))}
+            </ul>
+
+            <h3>Create Classroom</h3>
+            <form onSubmit={handleCreateClassroom}>
+                <input
+                    type="text"
+                    placeholder="Classroom Name"
+                    value={newClassroom.name}
+                    onChange={(e) => setNewClassroom({ ...newClassroom, name: e.target.value })}
+                    required
+                />
+                <input
+                    type="time"
+                    placeholder="Start Time"
+                    value={newClassroom.startTime}
+                    onChange={(e) => setNewClassroom({ ...newClassroom, startTime: e.target.value })}
+                    required
+                />
+                <input
+                    type="time"
+                    placeholder="End Time"
+                    value={newClassroom.endTime}
+                    onChange={(e) => setNewClassroom({ ...newClassroom, endTime: e.target.value })}
+                    required
+                />
+                <input
+                    type="text"
+                    placeholder="Days (e.g., Monday, Tuesday)"
+                    value={newClassroom.days}
+                    onChange={(e) => setNewClassroom({ ...newClassroom, days: e.target.value })}
+                    required
+                />
+                <button type="submit">Create Classroom</button>
+            </form>
+
+            <h3>Classrooms</h3>
+            <ul>
+                {classrooms.map(classroom => (
+                    <li key={classroom._id}>{classroom.name}</li>
+                ))}
+            </ul>
+        </div>
     );
 };
 
-export default Signup;
+export default PrincipalDashboard;
