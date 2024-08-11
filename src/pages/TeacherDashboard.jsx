@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PageHeader from './PageHeader';
-import { parseJwt } from '../service/jwtService'; 
+import { parseJwt } from '../service/jwtService';
 
 const TeacherDashboard = () => {
     const [students, setStudents] = useState([]);
-    const [timetable, setTimetable] = useState([]);
     const [newPeriod, setNewPeriod] = useState({
         subject: '',
         startTime: '',
@@ -13,37 +12,27 @@ const TeacherDashboard = () => {
         day: ''
     });
     const [assignedClassroom, setAssignedClassroom] = useState(null);
-    const [teachers, setTeachers] = useState([]);
-    const [newSubject, setNewSubject] = useState({
-        subject: '',
-        teacherId: ''
-    });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { user } = parseJwt(token);
-                
-                const classroomRes = await axios.get(`http://localhost:5000/api/classrooms/${user.classroom}`, {
+                const decodedToken = parseJwt(token);
+                const userId = decodedToken.user.id;
+
+                // Fetch classroom details by teacher ID
+                const classroomRes = await axios.get(`http://localhost:5000/api/classrooms/teacher/${userId}`, {
                     headers: { 'x-auth-token': token }
                 });
+
+                if (!classroomRes.data) {
+                    throw new Error('Classroom not found for this teacher');
+                }
+
+                console.log(classroomRes)
                 setAssignedClassroom(classroomRes.data);
+                setStudents(classroomRes.data.students); // Directly set students from classroom details
 
-                const studentsRes = await axios.get(`http://localhost:5000/api/users?classroom=${user.classroom}`, {
-                    headers: { 'x-auth-token': token }
-                });
-                setStudents(studentsRes.data);
-
-                const timetableRes = await axios.get(`http://localhost:5000/api/timetables?classroom=${user.classroom}`, {
-                    headers: { 'x-auth-token': token }
-                });
-                setTimetable(timetableRes.data);
-
-                const teachersRes = await axios.get('http://localhost:5000/api/users?role=Teacher', {
-                    headers: { 'x-auth-token': token }
-                });
-                setTeachers(teachersRes.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 alert('Failed to fetch data. Check the console for details.');
@@ -61,45 +50,23 @@ const TeacherDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/timetables', newPeriod, {
+            console.log(newPeriod, assignedClassroom._id)
+            if (!assignedClassroom) {
+                alert('No classroom assigned to this teacher.');
+                return;
+            }
+
+            await axios.post('http://localhost:5000/api/timetables/create-timetable', 
+            { ...newPeriod, classroomId: assignedClassroom._id }, {
                 headers: { 'x-auth-token': token }
             });
-
+    
             setNewPeriod({ subject: '', startTime: '', endTime: '', day: '' });
-
-            const timetableRes = await axios.get(`http://localhost:5000/api/timetables?classroom=${assignedClassroom._id}`, {
-                headers: { 'x-auth-token': token }
-            });
-            setTimetable(timetableRes.data);
-
+    
             alert('Period created successfully!');
         } catch (error) {
             console.error('Error creating period:', error);
             alert('Failed to create period. Check the console for details.');
-        }
-    };
-
-    const handleSubjectChange = (e) => {
-        setNewSubject({ ...newSubject, [e.target.name]: e.target.value });
-    };
-
-    const handleSubjectAssignment = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/timetables/assign-subject', {
-                ...newSubject,
-                classroomId: assignedClassroom._id
-            }, {
-                headers: { 'x-auth-token': token }
-            });
-
-            setNewSubject({ subject: '', teacherId: '' });
-
-            alert('Subject assigned successfully!');
-        } catch (error) {
-            console.error('Error assigning subject:', error);
-            alert('Failed to assign subject. Check the console for details.');
         }
     };
 
@@ -111,45 +78,26 @@ const TeacherDashboard = () => {
 
             {/* Students Table */}
             <h3>Students in Your Classroom</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {students.map(student => (
-                        <tr key={student._id}>
-                            <td>{student.name}</td>
-                            <td>{student.email}</td>
+            {assignedClassroom ? (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Timetable */}
-            <h3>Your Timetable</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Day</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {timetable.map(period => (
-                        <tr key={period._id}>
-                            <td>{period.subject}</td>
-                            <td>{period.startTime}</td>
-                            <td>{period.endTime}</td>
-                            <td>{period.day}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {students.map(student => (
+                            <tr key={student._id}>
+                                <td>{student.name}</td>
+                                <td>{student.email}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p>No classroom assigned to this teacher.</p>
+            )}
 
             {/* Create Timetable Period */}
             <h3>Create Timetable Period</h3>
@@ -187,31 +135,6 @@ const TeacherDashboard = () => {
                     required
                 />
                 <button type="submit">Create Period</button>
-            </form>
-
-            {/* Subject Assignment */}
-            <h3>Assign Subject</h3>
-            <form onSubmit={handleSubjectAssignment}>
-                <input
-                    type="text"
-                    name="subject"
-                    placeholder="Subject"
-                    value={newSubject.subject}
-                    onChange={handleSubjectChange}
-                    required
-                />
-                <select
-                    name="teacherId"
-                    value={newSubject.teacherId}
-                    onChange={handleSubjectChange}
-                    required
-                >
-                    <option value="">Select Teacher</option>
-                    {teachers.map(teacher => (
-                        <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
-                    ))}
-                </select>
-                <button type="submit">Assign Subject</button>
             </form>
         </div>
     );

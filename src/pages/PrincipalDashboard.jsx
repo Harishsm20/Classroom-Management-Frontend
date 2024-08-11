@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PageHeader from './PageHeader';
+import { Link } from 'react-router-dom';
 
 const PrincipalDashboard = () => {
     const [teachers, setTeachers] = useState([]);
@@ -18,13 +19,13 @@ const PrincipalDashboard = () => {
                     axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } }),
                     axios.get('http://localhost:5000/api/classrooms', { headers: { 'x-auth-token': token } })
                 ]);
-
+        
                 setTeachers(teachersRes.data);
                 setStudents(studentsRes.data);
                 setClassrooms(classroomsRes.data);
-
+        
                 // Filter out teachers already assigned to a classroom
-                const assignedTeacherIds = classroomsRes.data.flatMap(c => c.teachers);
+                const assignedTeacherIds = classroomsRes.data.map(c => c.teacher);
                 setTeachers(teachersRes.data.filter(teacher => !assignedTeacherIds.includes(teacher._id)));
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -76,31 +77,34 @@ const PrincipalDashboard = () => {
             await axios.post('http://localhost:5000/api/classrooms', newClassroom, {
                 headers: { 'x-auth-token': token }
             });
-
+    
             setNewClassroom({ name: '', startTime: '', endTime: '', teacher: '' });
-
+    
             // Refetch classrooms to update the list
             const classroomsRes = await axios.get('http://localhost:5000/api/classrooms', {
                 headers: { 'x-auth-token': token }
             });
             setClassrooms(classroomsRes.data);
-
+    
             // Refetch teachers and filter out those already assigned
             const teachersRes = await axios.get('http://localhost:5000/api/users?role=Teacher', {
                 headers: { 'x-auth-token': token }
             });
-            const assignedTeacherIds = classroomsRes.data.flatMap(c => c.teachers);
+            const assignedTeacherIds = classroomsRes.data.map(c => c.teacher);
             setTeachers(teachersRes.data.filter(teacher => !assignedTeacherIds.includes(teacher._id)));
         } catch (error) {
             console.error(error);
         }
     };
+    
 
     return (
         <div>
             <PageHeader title="Principal Dashboard" />
 
             <h2>Principal Dashboard</h2>
+            <h4><Link to="/assign-teacher">Assign Teacher</Link></h4>
+            <h4><Link to="/assign-student">Assign Student</Link></h4>
 
             {/* Teachers Table */}
             <h3>Teachers</h3>
