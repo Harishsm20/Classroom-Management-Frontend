@@ -27,25 +27,27 @@ const TeacherDashboard = () => {
                         headers: { 'x-auth-token': token }
                     })
                 ]);
-
+    
+                console.log("Students fetched:", studentsRes.data);
+                console.log("Timetable fetched:", timetableRes.data);
+    
                 setStudents(studentsRes.data);
                 setTimetable(timetableRes.data);
             } catch (error) {
-                console.error(error);
+                console.error("Error fetching data:", error);
             }
         };
-
-        // Extract teacher ID from the JWT token
+    
         const token = localStorage.getItem('token');
         const decodedToken = parseJwt(token);
-
+    
         if (decodedToken && decodedToken.user) {
             setNewPeriod((prevPeriod) => ({
                 ...prevPeriod,
                 teacher: decodedToken.user.id
             }));
         }
-
+    
         fetchData();
     }, []);
 
@@ -53,26 +55,19 @@ const TeacherDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/timetable', newPeriod, {
+            await axios.post('http://localhost:5000/api/timetable/create-timetable', newPeriod, {
                 headers: { 'x-auth-token': token }
             });
-            setNewPeriod({
-                subject: '',
-                startTime: '',
-                endTime: '',
-                day: '',
-                teacher: newPeriod.teacher, // Keep the teacher ID
-                classroom: ''
-            });
-
+    
             const timetableRes = await axios.get('http://localhost:5000/api/timetable', {
                 headers: { 'x-auth-token': token }
             });
             setTimetable(timetableRes.data);
         } catch (error) {
-            console.error(error);
+            console.error("Error adding period:", error);
         }
     };
+    
 
     return (
         <div>
