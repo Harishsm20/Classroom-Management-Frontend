@@ -23,39 +23,39 @@ const TeacherDashboard = () => {
                     axios.get('http://localhost:5000/api/users?role=Student', {
                         headers: { 'x-auth-token': token }
                     }),
-                    axios.get('http://localhost:5000/api/timetable')
+                    axios.get('http://localhost:5000/api/timetable', {
+                        headers: { 'x-auth-token': token }
+                    })
                 ]);
-    
-                // Log the API responses
-                console.log('Students Response:', studentsRes.data);
-                console.log('Timetable Response:', timetableRes.data);
-    
+
                 setStudents(studentsRes.data);
                 setTimetable(timetableRes.data);
             } catch (error) {
                 console.error(error);
             }
         };
-    
+
         // Extract teacher ID from the JWT token
         const token = localStorage.getItem('token');
         const decodedToken = parseJwt(token);
-    
+
         if (decodedToken && decodedToken.user) {
             setNewPeriod((prevPeriod) => ({
                 ...prevPeriod,
                 teacher: decodedToken.user.id
             }));
         }
-    
+
         fetchData();
     }, []);
-    
 
     const handleAddPeriod = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/timetable', newPeriod);
+            const token = localStorage.getItem('token');
+            await axios.post('http://localhost:5000/api/timetable', newPeriod, {
+                headers: { 'x-auth-token': token }
+            });
             setNewPeriod({
                 subject: '',
                 startTime: '',
@@ -64,7 +64,10 @@ const TeacherDashboard = () => {
                 teacher: newPeriod.teacher, // Keep the teacher ID
                 classroom: ''
             });
-            const timetableRes = await axios.get('http://localhost:5000/api/timetable');
+
+            const timetableRes = await axios.get('http://localhost:5000/api/timetable', {
+                headers: { 'x-auth-token': token }
+            });
             setTimetable(timetableRes.data);
         } catch (error) {
             console.error(error);
