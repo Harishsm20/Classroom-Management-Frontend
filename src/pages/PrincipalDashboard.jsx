@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PageHeader from './PageHeader';
-import { Link } from 'react-router-dom';
 
 const PrincipalDashboard = () => {
     const [teachers, setTeachers] = useState([]);
@@ -9,6 +8,8 @@ const PrincipalDashboard = () => {
     const [classrooms, setClassrooms] = useState([]);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '', classroom: '' });
     const [newClassroom, setNewClassroom] = useState({ name: '', startTime: '', endTime: '', teacher: '' });
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [updatedUser, setUpdatedUser] = useState({ name: '', email: '', role: '', classroom: '' });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -42,6 +43,10 @@ const PrincipalDashboard = () => {
 
     const handleClassroomChange = (e) => {
         setNewClassroom({ ...newClassroom, [e.target.name]: e.target.value });
+    };
+
+    const handleUpdateChange = (e) => {
+        setUpdatedUser({ ...updatedUser, [e.target.name]: e.target.value });
     };
 
     const handleUserSubmit = async (e) => {
@@ -96,15 +101,60 @@ const PrincipalDashboard = () => {
             console.error(error);
         }
     };
-    
+
+    const handleDeleteUser = async (userId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+                headers: { 'x-auth-token': token }
+            });
+
+            // Refetch data to update the lists
+            const [teachersRes, studentsRes] = await Promise.all([
+                axios.get('http://localhost:5000/api/users?role=Teacher', { headers: { 'x-auth-token': token } }),
+                axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } })
+            ]);
+            setTeachers(teachersRes.data);
+            setStudents(studentsRes.data);
+        } catch (error) {
+            console.error('Error deleting user:', error);
+        }
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`http://localhost:5000/api/users/${selectedUser._id}`, updatedUser, {
+                headers: { 'x-auth-token': token }
+            });
+
+            setSelectedUser(null);
+            setUpdatedUser({ name: '', email: '', role: '', classroom: '' });
+            alert('User updated successfully!');
+
+            // Refetch data to update the lists
+            const [teachersRes, studentsRes] = await Promise.all([
+                axios.get('http://localhost:5000/api/users?role=Teacher', { headers: { 'x-auth-token': token } }),
+                axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } })
+            ]);
+            setTeachers(teachersRes.data);
+            setStudents(studentsRes.data);
+        } catch (error) {
+            console.error('Error updating user:', error);
+        }
+    };
+
+    const handleSelectUser = (user) => {
+        setSelectedUser(user);
+        setUpdatedUser({ name: user.name, email: user.email, role: user.role, classroom: user.classroom || '' });
+    };
 
     return (
         <div>
             <PageHeader title="Principal Dashboard" />
 
             <h2>Principal Dashboard</h2>
-            <h4><Link to="/assign-teacher">Assign Teacher</Link></h4>
-            <h4><Link to="/assign-student">Assign Student</Link></h4>
 
             {/* Teachers Table */}
             <h3>Teachers</h3>
@@ -114,6 +164,7 @@ const PrincipalDashboard = () => {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -122,6 +173,10 @@ const PrincipalDashboard = () => {
                             <td>{teacher.name}</td>
                             <td>{teacher.email}</td>
                             <td>{teacher.role}</td>
+                            <td>
+                                <button onClick={() => handleDeleteUser(teacher._id)}>Delete</button>
+                                <button onClick={() => handleSelectUser(teacher)}>Edit</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -135,6 +190,7 @@ const PrincipalDashboard = () => {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Classroom</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -143,6 +199,10 @@ const PrincipalDashboard = () => {
                             <td>{student.name}</td>
                             <td>{student.email}</td>
                             <td>{student.classroom}</td>
+                            <td>
+                                <button onClick={() => handleDeleteUser(student._id)}>Delete</button>
+                                <button onClick={() => handleSelectUser(student)}>Edit</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -154,25 +214,25 @@ const PrincipalDashboard = () => {
                 <input
                     type="text"
                     name="name"
-                    placeholder="Classroom Name"
                     value={newClassroom.name}
                     onChange={handleClassroomChange}
+                    placeholder="Classroom Name"
                     required
                 />
                 <input
                     type="time"
                     name="startTime"
-                    placeholder="Start Time"
                     value={newClassroom.startTime}
                     onChange={handleClassroomChange}
+                    placeholder="Start Time"
                     required
                 />
                 <input
                     type="time"
                     name="endTime"
-                    placeholder="End Time"
                     value={newClassroom.endTime}
                     onChange={handleClassroomChange}
+                    placeholder="End Time"
                     required
                 />
                 <select
@@ -189,39 +249,75 @@ const PrincipalDashboard = () => {
                 <button type="submit">Create Classroom</button>
             </form>
 
-            {/* Classrooms List */}
-            <h3>Classrooms</h3>
-            <ul>
-                {classrooms.map(classroom => (
-                    <li key={classroom._id}>{classroom.name}</li>
-                ))}
-            </ul>
+            {/* Update User Form */}
+            {selectedUser && (
+                <div>
+                    <h3>Edit User</h3>
+                    <form onSubmit={handleUpdateUser}>
+                        <input
+                            type="text"
+                            name="name"
+                            value={updatedUser.name}
+                            onChange={handleUpdateChange}
+                            placeholder="Name"
+                            required
+                        />
+                        <input
+                            type="email"
+                            name="email"
+                            value={updatedUser.email}
+                            onChange={handleUpdateChange}
+                            placeholder="Email"
+                            required
+                        />
+                        <select
+                            name="role"
+                            value={updatedUser.role}
+                            onChange={handleUpdateChange}
+                            required
+                        >
+                            <option value="Teacher">Teacher</option>
+                            <option value="Student">Student</option>
+                        </select>
+                        {updatedUser.role === 'Student' && (
+                            <input
+                                type="text"
+                                name="classroom"
+                                value={updatedUser.classroom}
+                                onChange={handleUpdateChange}
+                                placeholder="Classroom"
+                            />
+                        )}
+                        <button type="submit">Update User</button>
+                    </form>
+                </div>
+            )}
 
             {/* Create User Form */}
-            <h3>Create a New User</h3>
+            <h3>Create User</h3>
             <form onSubmit={handleUserSubmit}>
                 <input
                     type="text"
                     name="name"
-                    placeholder="Name"
                     value={newUser.name}
                     onChange={handleUserChange}
+                    placeholder="Name"
                     required
                 />
                 <input
                     type="email"
                     name="email"
-                    placeholder="Email"
                     value={newUser.email}
                     onChange={handleUserChange}
+                    placeholder="Email"
                     required
                 />
                 <input
                     type="password"
                     name="password"
-                    placeholder="Password"
                     value={newUser.password}
                     onChange={handleUserChange}
+                    placeholder="Password"
                     required
                 />
                 <select
@@ -230,19 +326,21 @@ const PrincipalDashboard = () => {
                     onChange={handleUserChange}
                     required
                 >
-                    <option value="">Select Role</option>
                     <option value="Teacher">Teacher</option>
                     <option value="Student">Student</option>
                 </select>
                 {newUser.role === 'Student' && (
-                    <input
-                        type="text"
+                    <select
                         name="classroom"
-                        placeholder="Classroom (e.g., 12-B)"
                         value={newUser.classroom}
                         onChange={handleUserChange}
                         required
-                    />
+                    >
+                        <option value="">Select Classroom</option>
+                        {classrooms.map(classroom => (
+                            <option key={classroom._id} value={classroom._id}>{classroom.name}</option>
+                        ))}
+                    </select>
                 )}
                 <button type="submit">Create User</button>
             </form>
