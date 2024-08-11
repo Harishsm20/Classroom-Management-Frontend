@@ -4,6 +4,7 @@ import PrincipalDashboard from './pages/PrincipalDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import Signup from './pages/Signup';
+import './index.css';
 
 function App() {
     return (

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PageHeader from './PageHeader';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import '../css/PricipalDashboard.css';
 
 const PrincipalDashboard = () => {
     const [teachers, setTeachers] = useState([]);
@@ -151,7 +153,7 @@ const PrincipalDashboard = () => {
     };
 
     return (
-        <div>
+        <div className="PrincipalDashboard">
             <PageHeader title="Principal Dashboard" />
 
             <h2>Principal Dashboard</h2>
@@ -173,9 +175,13 @@ const PrincipalDashboard = () => {
                             <td>{teacher.name}</td>
                             <td>{teacher.email}</td>
                             <td>{teacher.role}</td>
-                            <td>
-                                <button onClick={() => handleDeleteUser(teacher._id)}>Delete</button>
-                                <button onClick={() => handleSelectUser(teacher)}>Edit</button>
+                            <td className="actions">
+                                <button onClick={() => handleDeleteUser(teacher._id)}>
+                                    <FaTrash />
+                                </button>
+                                <button onClick={() => handleSelectUser(teacher)}>
+                                    <FaEdit />
+                                </button>
                             </td>
                         </tr>
                     ))}
@@ -199,9 +205,13 @@ const PrincipalDashboard = () => {
                             <td>{student.name}</td>
                             <td>{student.email}</td>
                             <td>{student.classroom}</td>
-                            <td>
-                                <button onClick={() => handleDeleteUser(student._id)}>Delete</button>
-                                <button onClick={() => handleSelectUser(student)}>Edit</button>
+                            <td className="actions">
+                                <button onClick={() => handleDeleteUser(student._id)}>
+                                    <FaTrash />
+                                </button>
+                                <button onClick={() => handleSelectUser(student)}>
+                                    <FaEdit />
+                                </button>
                             </td>
                         </tr>
                     ))}

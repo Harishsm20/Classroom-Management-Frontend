@@ -12,6 +12,7 @@ const TeacherDashboard = () => {
         day: ''
     });
     const [assignedClassroom, setAssignedClassroom] = useState(null);
+    const [timetable, setTimetable] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -29,9 +30,15 @@ const TeacherDashboard = () => {
                     throw new Error('Classroom not found for this teacher');
                 }
 
-                console.log(classroomRes)
                 setAssignedClassroom(classroomRes.data);
                 setStudents(classroomRes.data.students); // Directly set students from classroom details
+
+                // Fetch timetable for the classroom
+                const timetableRes = await axios.get(`http://localhost:5000/api/timetables/classroom/${classroomRes.data._id}`, {
+                    headers: { 'x-auth-token': token }
+                });
+
+                setTimetable(timetableRes.data);
 
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -50,7 +57,6 @@ const TeacherDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            console.log(newPeriod, assignedClassroom._id)
             if (!assignedClassroom) {
                 alert('No classroom assigned to this teacher.');
                 return;
@@ -74,23 +80,24 @@ const TeacherDashboard = () => {
         <div>
             <PageHeader title="Teacher Dashboard" />
 
-            <h2>Teacher Dashboard</h2>
+            {/* Classroom Name */}
+            <h2 className="text-2xl font-semibold mb-4">{assignedClassroom ? assignedClassroom.name : 'Loading...'}</h2>
 
             {/* Students Table */}
-            <h3>Students in Your Classroom</h3>
+            <h3 className="text-xl font-semibold mb-2">Students in Your Classroom</h3>
             {assignedClassroom ? (
-                <table>
+                <table className="w-full border-collapse mb-4">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
+                            <th className="border p-2">Name</th>
+                            <th className="border p-2">Email</th>
                         </tr>
                     </thead>
                     <tbody>
                         {students.map(student => (
                             <tr key={student._id}>
-                                <td>{student.name}</td>
-                                <td>{student.email}</td>
+                                <td className="border p-2">{student.name}</td>
+                                <td className="border p-2">{student.email}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -99,9 +106,38 @@ const TeacherDashboard = () => {
                 <p>No classroom assigned to this teacher.</p>
             )}
 
+            {/* Timetable */}
+            <h3 className="text-xl font-semibold mb-2">Timetable</h3>
+            <table className="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th className="border p-2">Day</th>
+                        <th className="border p-2">Subject</th>
+                        <th className="border p-2">Start Time</th>
+                        <th className="border p-2">End Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {timetable.length > 0 ? (
+                        timetable.map(period => (
+                            <tr key={period._id}>
+                                <td className="border p-2">{period.day}</td>
+                                <td className="border p-2">{period.subject}</td>
+                                <td className="border p-2">{period.startTime}</td>
+                                <td className="border p-2">{period.endTime}</td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan="4" className="text-center border p-2">No timetable available</td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+
             {/* Create Timetable Period */}
-            <h3>Create Timetable Period</h3>
-            <form onSubmit={handlePeriodSubmit}>
+            <h3 className="text-xl font-semibold mb-2">Create Timetable Period</h3>
+            <form onSubmit={handlePeriodSubmit} className="mb-4">
                 <input
                     type="text"
                     name="subject"
@@ -109,6 +145,7 @@ const TeacherDashboard = () => {
                     value={newPeriod.subject}
                     onChange={handlePeriodChange}
                     required
+                    className="border p-2 mb-2 w-full"
                 />
                 <input
                     type="time"
@@ -117,6 +154,7 @@ const TeacherDashboard = () => {
                     value={newPeriod.startTime}
                     onChange={handlePeriodChange}
                     required
+                    className="border p-2 mb-2 w-full"
                 />
                 <input
                     type="time"
@@ -125,6 +163,7 @@ const TeacherDashboard = () => {
                     value={newPeriod.endTime}
                     onChange={handlePeriodChange}
                     required
+                    className="border p-2 mb-2 w-full"
                 />
                 <input
                     type="text"
@@ -133,8 +172,9 @@ const TeacherDashboard = () => {
                     value={newPeriod.day}
                     onChange={handlePeriodChange}
                     required
+                    className="border p-2 mb-4 w-full"
                 />
-                <button type="submit">Create Period</button>
+                <button type="submit" className="bg-blue-500 text-white p-2 rounded">Create Period</button>
             </form>
         </div>
     );
