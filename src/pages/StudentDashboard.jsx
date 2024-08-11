@@ -1,47 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PageHeader from './PageHeader';
+import {parseJwt} from '../service/jwtService'; 
 
 const StudentDashboard = () => {
     const [classroom, setClassroom] = useState(null);
     const [timetable, setTimetable] = useState([]);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchClassroom = async () => {
             try {
-                // Fetch classroom and timetable data
-                const [classroomRes, timetableRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/classroom'), // Adjust endpoint as needed
-                    axios.get('http://localhost:5000/api/timetable') // Adjust endpoint as needed
-                ]);
+                const token = localStorage.getItem('token');
+                const decodedToken = parseJwt(token)
+                const userId = decodedToken.user.id;
+                
+                const classroomRes = await axios.get(`http://localhost:5000/api/classrooms/student/${userId}/`, {
+                    headers: { 'x-auth-token': token }
+                });
+                console.log(classroomRes)
+
                 setClassroom(classroomRes.data);
+
+                // Fetch the timetable for the classroom
+                const timetableRes = await axios.get(`http://localhost:5000/api/timetables/classroom/${classroomRes.data._id}`, {
+                    headers: { 'x-auth-token': token }
+                });
+
+                console.log(`Time tables:`, timetableRes)
                 setTimetable(timetableRes.data);
             } catch (error) {
-                console.error(error);
+                console.error('Error fetching classroom:', error);
             }
         };
-        fetchData();
+
+        fetchClassroom();
     }, []);
 
     return (
         <div>
             <PageHeader title="Student Dashboard" />
 
-            <h2>Student Dashboard</h2>
-
             {classroom && (
                 <div>
-                    <h3>Classroom</h3>
-                    <p>{classroom.name}</p>
+                    <h2>{classroom.name}</h2>
                 </div>
             )}
 
             <h3>Timetable</h3>
-            <ul>
-                {timetable.map(period => (
-                    <li key={period._id}>{`${period.subject} - ${period.startTime} to ${period.endTime} (${period.day})`}</li>
-                ))}
-            </ul>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+                <thead>
+                    <tr>
+                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Day</th>
+                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Subject</th>
+                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Start Time</th>
+                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>End Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {timetable.length > 0 ? (
+                        timetable.map(period => (
+                            <tr key={period._id}>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{period.day}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{period.subject}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{period.startTime}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{period.endTime}</td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan="4" style={{ textAlign: 'center', padding: '8px' }}>No timetable available</td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 };
