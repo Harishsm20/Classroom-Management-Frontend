@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { parseJwt } from '../service/jwtService';
 import '../css/Login.css';
 
+const apiBaseUrl = 'https://classroom-management-backend.onrender.com'  || 'http://localhost:5000';
+console.log('API Base URL:', apiBaseUrl);
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -12,7 +15,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+            const response = await axios.post(`${apiBaseUrl}/api/auth/login`, { email, password });
             const token = response.data.token;
             console.log("Token received:", token);
             localStorage.setItem('token', token);

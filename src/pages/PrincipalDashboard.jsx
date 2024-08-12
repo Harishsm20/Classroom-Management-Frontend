@@ -4,8 +4,11 @@ import PageHeader from './PageHeader';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import '../css/PricipalDashboard.css';
 
+const apiBaseUrl = 'https://classroom-management-backend.onrender.com'  || 'http://localhost:5000';
+
 const PrincipalDashboard = () => {
     const [teachers, setTeachers] = useState([]);
+    const [teachersDropDown, setTeachersDropDown] = useState([]);
     const [students, setStudents] = useState([]);
     const [classrooms, setClassrooms] = useState([]);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '', classroom: '' });
@@ -18,18 +21,20 @@ const PrincipalDashboard = () => {
             try {
                 const token = localStorage.getItem('token');
                 const [teachersRes, studentsRes, classroomsRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/users?role=Teacher', { headers: { 'x-auth-token': token } }),
-                    axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } }),
-                    axios.get('http://localhost:5000/api/classrooms', { headers: { 'x-auth-token': token } })
+                    axios.get(`${apiBaseUrl}/api/users?role=Teacher`, { headers: { 'x-auth-token': token } }),
+                    axios.get(`${apiBaseUrl}/api/users?role=Student`, { headers: { 'x-auth-token': token } }),
+                    axios.get(`${apiBaseUrl}/api/classrooms`, { headers: { 'x-auth-token': token } })
                 ]);
-        
+                
+                console.log(studentsRes)
                 setTeachers(teachersRes.data);
+                setTeachersDropDown(teachersRes.data);
                 setStudents(studentsRes.data);
                 setClassrooms(classroomsRes.data);
         
                 // Filter out teachers already assigned to a classroom
                 const assignedTeacherIds = classroomsRes.data.map(c => c.teacher);
-                setTeachers(teachersRes.data.filter(teacher => !assignedTeacherIds.includes(teacher._id)));
+                setTeachersDropDown(teachersRes.data.filter(teacher => !assignedTeacherIds.includes(teacher._id)));
             } catch (error) {
                 console.error('Error fetching data:', error);
                 alert('Failed to fetch data. Check the console for details.');
@@ -57,8 +62,9 @@ const PrincipalDashboard = () => {
             const token = localStorage.getItem('token');
             const userPayload = { ...newUser };
             if (newUser.role !== 'Student') delete userPayload.classroom;
+            console.log(newUser.classroom)
 
-            await axios.post('http://localhost:5000/api/users/create', userPayload, {
+            await axios.post(`${apiBaseUrl}/api/users/create`, userPayload, {
                 headers: { 'x-auth-token': token }
             });
 
@@ -67,8 +73,8 @@ const PrincipalDashboard = () => {
 
             // Refetch data to update the lists
             const [teachersRes, studentsRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/users?role=Teacher', { headers: { 'x-auth-token': token } }),
-                axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } })
+                axios.get(`${apiBaseUrl}/api/users?role=Teacher`, { headers: { 'x-auth-token': token } }),
+                axios.get(`${apiBaseUrl}/api/users?role=Student`, { headers: { 'x-auth-token': token } })
             ]);
             setTeachers(teachersRes.data);
             setStudents(studentsRes.data);
@@ -81,20 +87,20 @@ const PrincipalDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/classrooms', newClassroom, {
+            await axios.post(`${apiBaseUrl}/api/classrooms`, newClassroom, {
                 headers: { 'x-auth-token': token }
             });
     
             setNewClassroom({ name: '', startTime: '', endTime: '', teacher: '' });
     
             // Refetch classrooms to update the list
-            const classroomsRes = await axios.get('http://localhost:5000/api/classrooms', {
+            const classroomsRes = await axios.get(`${apiBaseUrl}/api/classrooms`, {
                 headers: { 'x-auth-token': token }
             });
             setClassrooms(classroomsRes.data);
     
             // Refetch teachers and filter out those already assigned
-            const teachersRes = await axios.get('http://localhost:5000/api/users?role=Teacher', {
+            const teachersRes = await axios.get(`${apiBaseUrl}/api/users?role=Teacher`, {
                 headers: { 'x-auth-token': token }
             });
             const assignedTeacherIds = classroomsRes.data.map(c => c.teacher);
@@ -107,14 +113,14 @@ const PrincipalDashboard = () => {
     const handleDeleteUser = async (userId) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+            await axios.delete(`${apiBaseUrl}/api/users/${userId}`, {
                 headers: { 'x-auth-token': token }
             });
 
             // Refetch data to update the lists
             const [teachersRes, studentsRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/users?role=Teacher', { headers: { 'x-auth-token': token } }),
-                axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } })
+                axios.get(`${apiBaseUrl}/api/users?role=Teacher`, { headers: { 'x-auth-token': token } }),
+                axios.get(`${apiBaseUrl}/api/users?role=Student`, { headers: { 'x-auth-token': token } })
             ]);
             setTeachers(teachersRes.data);
             setStudents(studentsRes.data);
@@ -127,7 +133,7 @@ const PrincipalDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5000/api/users/${selectedUser._id}`, updatedUser, {
+            await axios.put(`${apiBaseUrl}/api/users/${selectedUser._id}`, updatedUser, {
                 headers: { 'x-auth-token': token }
             });
 
@@ -137,8 +143,8 @@ const PrincipalDashboard = () => {
 
             // Refetch data to update the lists
             const [teachersRes, studentsRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/users?role=Teacher', { headers: { 'x-auth-token': token } }),
-                axios.get('http://localhost:5000/api/users?role=Student', { headers: { 'x-auth-token': token } })
+                axios.get(`${apiBaseUrl}/api/users?role=Teacher`, { headers: { 'x-auth-token': token } }),
+                axios.get(`${apiBaseUrl}/api/users?role=Student`, { headers: { 'x-auth-token': token } })
             ]);
             setTeachers(teachersRes.data);
             setStudents(studentsRes.data);
@@ -252,7 +258,7 @@ const PrincipalDashboard = () => {
                     required
                 >
                     <option value="">Select Teacher</option>
-                    {teachers.map(teacher => (
+                    {teachersDropDown.map(teacher => (
                         <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
                     ))}
                 </select>
@@ -336,6 +342,7 @@ const PrincipalDashboard = () => {
                     onChange={handleUserChange}
                     required
                 >
+                    <option value="" disabled> Select Role </option> 
                     <option value="Teacher">Teacher</option>
                     <option value="Student">Student</option>
                 </select>
@@ -348,7 +355,7 @@ const PrincipalDashboard = () => {
                     >
                         <option value="">Select Classroom</option>
                         {classrooms.map(classroom => (
-                            <option key={classroom._id} value={classroom._id}>{classroom.name}</option>
+                            <option key={classroom._id} value={classroom.name}>{classroom.name}</option>
                         ))}
                     </select>
                 )}

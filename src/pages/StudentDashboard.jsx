@@ -3,6 +3,9 @@ import axios from 'axios';
 import PageHeader from './PageHeader';
 import { parseJwt } from '../service/jwtService';
 
+const apiBaseUrl = 'https://classroom-management-backend.onrender.com'  || 'http://localhost:5000';
+
+
 const StudentDashboard = () => {
     const [classroom, setClassroom] = useState(null);
     const [timetable, setTimetable] = useState([]);
@@ -14,14 +17,14 @@ const StudentDashboard = () => {
                 const decodedToken = parseJwt(token);
                 const userId = decodedToken.user.id;
                 
-                const classroomRes = await axios.get(`http://localhost:5000/api/classrooms/student/${userId}/`, {
+                const classroomRes = await axios.get(`${apiBaseUrl}/api/classrooms/student/${userId}/`, {
                     headers: { 'x-auth-token': token }
                 });
 
                 setClassroom(classroomRes.data);
 
                 // Fetch the timetable for the classroom
-                const timetableRes = await axios.get(`http://localhost:5000/api/timetables/classroom/${classroomRes.data._id}`, {
+                const timetableRes = await axios.get(`${apiBaseUrl}/api/timetables/classroom/${classroomRes.data._id}`, {
                     headers: { 'x-auth-token': token }
                 });
 

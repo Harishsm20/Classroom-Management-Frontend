@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const apiBaseUrl = 'https://classroom-management-backend.onrender.com'  || 'http://localhost:5000';
+
 const Signup = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -12,7 +14,7 @@ const Signup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/auth/signup', { name, email, password, role });
+            await axios.post(`${apiBaseUrl}/api/auth/signup`, { name, email, password, role });
             navigate('/login');
         } catch (error) {
             console.error(error);

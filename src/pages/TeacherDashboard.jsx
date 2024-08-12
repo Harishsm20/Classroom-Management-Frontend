@@ -3,6 +3,8 @@ import axios from 'axios';
 import PageHeader from './PageHeader';
 import { parseJwt } from '../service/jwtService';
 
+const apiBaseUrl = 'https://classroom-management-backend.onrender.com'  || 'http://localhost:5000';
+
 const TeacherDashboard = () => {
     const [students, setStudents] = useState([]);
     const [newPeriod, setNewPeriod] = useState({
@@ -22,7 +24,7 @@ const TeacherDashboard = () => {
                 const userId = decodedToken.user.id;
 
                 // Fetch classroom details by teacher ID
-                const classroomRes = await axios.get(`http://localhost:5000/api/classrooms/teacher/${userId}`, {
+                const classroomRes = await axios.get(`${apiBaseUrl}/api/classrooms/teacher/${userId}`, {
                     headers: { 'x-auth-token': token }
                 });
 
@@ -34,7 +36,7 @@ const TeacherDashboard = () => {
                 setStudents(classroomRes.data.students); // Directly set students from classroom details
 
                 // Fetch timetable for the classroom
-                const timetableRes = await axios.get(`http://localhost:5000/api/timetables/classroom/${classroomRes.data._id}`, {
+                const timetableRes = await axios.get(`${apiBaseUrl}/api/timetables/classroom/${classroomRes.data._id}`, {
                     headers: { 'x-auth-token': token }
                 });
 
@@ -62,7 +64,7 @@ const TeacherDashboard = () => {
                 return;
             }
 
-            await axios.post('http://localhost:5000/api/timetables/create-timetable', 
+            await axios.post(`${apiBaseUrl}/api/timetables/create-timetable`, 
             { ...newPeriod, classroomId: assignedClassroom._id }, {
                 headers: { 'x-auth-token': token }
             });
