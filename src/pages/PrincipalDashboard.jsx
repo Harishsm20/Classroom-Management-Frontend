@@ -223,48 +223,7 @@ const PrincipalDashboard = () => {
                     ))}
                 </tbody>
             </table>
-
-            {/* Create Classroom Form */}
-            <h3>Create Classroom</h3>
-            <form onSubmit={handleClassroomSubmit}>
-                <input
-                    type="text"
-                    name="name"
-                    value={newClassroom.name}
-                    onChange={handleClassroomChange}
-                    placeholder="Classroom Name"
-                    required
-                />
-                <input
-                    type="time"
-                    name="startTime"
-                    value={newClassroom.startTime}
-                    onChange={handleClassroomChange}
-                    placeholder="Start Time"
-                    required
-                />
-                <input
-                    type="time"
-                    name="endTime"
-                    value={newClassroom.endTime}
-                    onChange={handleClassroomChange}
-                    placeholder="End Time"
-                    required
-                />
-                <select
-                    name="teacher"
-                    value={newClassroom.teacher}
-                    onChange={handleClassroomChange}
-                    required
-                >
-                    <option value="">Select Teacher</option>
-                    {teachersDropDown.map(teacher => (
-                        <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
-                    ))}
-                </select>
-                <button type="submit">Create Classroom</button>
-            </form>
-
+            
             {/* Update User Form */}
             {selectedUser && (
                 <div>
@@ -308,6 +267,48 @@ const PrincipalDashboard = () => {
                     </form>
                 </div>
             )}
+
+            {/* Create Classroom Form */}
+            <h3>Create Classroom</h3>
+            <form onSubmit={handleClassroomSubmit}>
+                <input
+                    type="text"
+                    name="name"
+                    value={newClassroom.name}
+                    onChange={handleClassroomChange}
+                    placeholder="Classroom Name"
+                    required
+                />
+                <input
+                    type="time"
+                    name="startTime"
+                    value={newClassroom.startTime}
+                    onChange={handleClassroomChange}
+                    placeholder="Start Time"
+                    required
+                />
+                <input
+                    type="time"
+                    name="endTime"
+                    value={newClassroom.endTime}
+                    onChange={handleClassroomChange}
+                    placeholder="End Time"
+                    required
+                />
+                <select
+                    name="teacher"
+                    value={newClassroom.teacher}
+                    onChange={handleClassroomChange}
+                    required
+                >
+                    <option value="">Select Teacher</option>
+                    {teachersDropDown.map(teacher => (
+                        <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
+                    ))}
+                </select>
+                <button type="submit">Create Classroom</button>
+            </form>
+
 
             {/* Create User Form */}
             <h3>Create User</h3>
