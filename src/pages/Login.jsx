@@ -20,17 +20,14 @@ const Login = () => {
         try {
             const response = await axios.post(`${apiBaseUrl}/api/auth/login`, { email, password });
             const token = response.data.token;
-            console.log("Token received:", token);
+
             localStorage.setItem('token', token);
-    
+
             const decodedToken = parseJwt(token);
-            console.log("Decoded Token:", decodedToken);
     
             if (decodedToken) {
                 const role = decodedToken.user.role;
-                console.log(`Role extracted: ${role}`);
                 localStorage.setItem('role', role);
-                console.log(`/${role.toLowerCase()}-dashboard`)
                 navigate(`/${role.toLowerCase()}-dashboard`);
             }
         } catch (error) {

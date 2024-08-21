@@ -26,7 +26,6 @@ const PrincipalDashboard = () => {
                     axios.get(`${apiBaseUrl}/api/classrooms`, { headers: { 'x-auth-token': token } })
                 ]);
                 
-                console.log(studentsRes)
                 setTeachers(teachersRes.data);
                 setTeachersDropDown(teachersRes.data);
                 setStudents(studentsRes.data);
@@ -62,7 +61,6 @@ const PrincipalDashboard = () => {
             const token = localStorage.getItem('token');
             const userPayload = { ...newUser };
             if (newUser.role !== 'Student') delete userPayload.classroom;
-            console.log(newUser.classroom)
 
             await axios.post(`${apiBaseUrl}/api/users/create`, userPayload, {
                 headers: { 'x-auth-token': token }
